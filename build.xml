@@ -1,0 +1,164 @@
+<project default="compile"
+	 xmlns:if="ant:if"
+	 xmlns:unless="ant:unless"
+
+>
+  <!-- for explanation of 
+	 xmlns:if="ant:if"
+	 xmlns:unless="ant:unless"
+       see: https://ant.apache.org/manual/ifunless.html 
+  -->
+
+  <path id="project.class.path"> 
+    <pathelement location="jars/hamcrest-core-1.3.jar"/>
+    <pathelement location="jars/junit-4.12.jar"/>
+    <pathelement location="build/classes"/>
+  </path>
+  
+  <property name="jar.file" value="build/jar/CS56Parser.jar"/>
+  <property name="javadoc_absolute_path" location="javadoc"/>
+  <property name="public_javadoc_absolute_path" 
+	    location="../cs56-parsing-assignment-javadoc"/>
+  <target name="clean" description="clean up">
+    <delete dir="build" quiet="true" />
+    <delete dir="javadoc" quiet="true" />
+    <delete dir="temp.d" quiet="true" />
+  </target>
+  
+  <target name="compile" description="compile the code">
+    <mkdir dir="build/classes"/>
+    <javac includeantruntime="false" srcdir="src" destdir="build/classes" debug="on">
+      <compilerarg value="-Xlint:unchecked"/>
+      <classpath refid="project.class.path" />   
+    </javac>
+  </target>
+
+  <target name="javadoc" depends="compile" description="generate javadoc">
+    <delete quiet="true" dir="javadoc" />
+    <mkdir dir="javadoc" />
+    <javadoc destdir="javadoc">
+      <fileset dir="src">
+	<include name="**/*.java"/>
+      </fileset>
+      <classpath refid="project.class.path"/>
+      <link href="http://docs.oracle.com/javase/8/docs/api/"/>
+    </javadoc>
+    <echo>
+      javadoc written to file://${javadoc_absolute_path}/index.html
+      copying to ${public_javadoc_absolute_path}/index.html
+    </echo>
+    <delete quiet="true">
+      <fileset dir="${public_javadoc_absolute_path}" />
+    </delete>
+    <mkdir dir="${public_javadoc_absolute_path}" />
+    <copy todir="${public_javadoc_absolute_path}">
+      <fileset dir="javadoc" />
+    </copy>
+    <echo>
+      javadoc copied to ${public_javadoc_absolute_path}/index.html
+      IF that is NOT where you want it to be copied,
+        edit the public_javadoc_absolute_path in your build.xml
+ 
+      ASSUMING THAT DIRECTORY IS A CLONE OF A PUBLIC GITHUB REPO:
+      TO PUBLISH: cd into that repo, then git add javadoc;
+      git commit -am "update javadoc"; git push origin gh-pages
+    </echo>
+    <delete>
+      <fileset dir="javadoc"/>
+    </delete>
+  </target>
+
+  <target name="jar" depends="compile" description="create a jar">
+    <mkdir dir="build/jar"/>
+    <jar destfile="${jar.file}" basedir="build/classes">
+      <manifest>
+        <attribute name="Main-Class" value="edu.ucsb.cs56.pconrad.parsing.Main"/>
+      </manifest>
+    </jar>
+  </target>
+  
+  <target name="run" depends="jar" description="run the main">
+    <java jar="${jar.file}" fork="true"/>
+  </target>
+  
+  <target name="test" depends="compile" description="run JUnit tests">
+    <junit haltonerror="no" haltonfailure="no">
+      <classpath refid="project.class.path" />   
+      <batchtest fork="yes">
+	<fileset dir="src">
+          <include name="**/*Test.java"/>
+	  </fileset>
+	</batchtest>
+	<formatter type="brief" usefile="false" />
+      </junit>
+    </target>
+
+
+  <target name="diff-tests" depends="jar" description="run tests using CLI, diffing actual and expected output ">
+    <delete dir="temp.d" quiet="true" />
+    <mkdir dir="temp.d" />
+    <java jar="${jar.file}" fork="true">
+      <redirector 
+	 input="testdata/test01.input.txt" 
+	 output="temp.d/test01.output.txt" />
+    </java>
+    <condition property="test01passed" value="true">
+       <filesmatch file1="testdata/test01.expected.txt" 
+		   file2="temp.d/test01.output.txt" />
+    </condition>
+   <echo if:set="test01passed">test01 passed</echo>
+   <echo unless:set="test01passed">test01 failed</echo>
+
+    <java jar="${jar.file}" fork="true">
+      <redirector 
+	 input="testdata/test02.input.txt" 
+	 output="temp.d/test02.output.txt" />
+    </java>
+    <condition property="test02passed" value="true">
+       <filesmatch file1="testdata/test02.expected.txt" 
+		   file2="temp.d/test02.output.txt" />
+    </condition>
+   <echo if:set="test02passed">test02 passed</echo>
+   <echo unless:set="test02passed">test02 failed</echo>
+
+    <java jar="${jar.file}" fork="true">
+      <redirector 
+	 input="testdata/test03.input.txt" 
+	 output="temp.d/test03.output.txt" />
+    </java>
+    <condition property="test03passed" value="true">
+       <filesmatch file1="testdata/test03.expected.txt" 
+		   file2="temp.d/test03.output.txt" />
+    </condition>
+   <echo if:set="test03passed">test03 passed</echo>
+   <echo unless:set="test03passed">test03 failed</echo>
+
+    <java jar="${jar.file}" fork="true">
+      <redirector 
+	 input="testdata/test04.input.txt" 
+	 output="temp.d/test04.output.txt" />
+    </java>
+    <condition property="test04passed" value="true">
+       <filesmatch file1="testdata/test04.expected.txt" 
+		   file2="temp.d/test04.output.txt" />
+    </condition>
+   <echo if:set="test04passed">test04 passed</echo>
+   <echo unless:set="test04passed">test04 failed</echo>
+
+    <java jar="${jar.file}" fork="true">
+      <redirector 
+	 input="testdata/test05.input.txt" 
+	 output="temp.d/test05.output.txt" />
+    </java>
+    <condition property="test05passed" value="true">
+       <filesmatch file1="testdata/test05.expected.txt" 
+		   file2="temp.d/test05.output.txt" />
+    </condition>
+   <echo if:set="test05passed">test05 passed</echo>
+   <echo unless:set="test05passed">test05 failed</echo>
+
+  </target>
+
+
+
+</project>
